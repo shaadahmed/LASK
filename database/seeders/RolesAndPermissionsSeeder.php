@@ -29,9 +29,9 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         // Create roles and assign permissions
-        $superAdmin = Role::create(['name' => 'super-admin']);
+        $superAdmin = Role::create(['name' => 'superadmin']);
         $admin = Role::create(['name' => 'admin']);
-        $user = Role::create(['name' => 'user']);
+        $developer = Role::create(['name' => 'developer']);
 
         // Super Admin gets all permissions
         $superAdmin->givePermissionTo(Permission::all());
@@ -44,21 +44,19 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_settings',
         ]);
 
-        // User permissions
-        $user->givePermissionTo([
-            'view_dashboard',
-        ]);
+        // Developer permissions
+        $developer->givePermissionTo(Permission::all());
 
         // Create a super admin user
-        $superAdminUser = User::where('email', 'superadmin@cms.com')->first();
-        $superAdminUser->assignRole('super-admin');
+        $superAdminUser = User::where('email', 'superadmin@lask.com')->first();
+        $superAdminUser->assignRole('superadmin');
 
         // Create an admin user
-        $adminUser = User::where('email', 'admin@cms.com')->first();
+        $adminUser = User::where('email', 'admin@lask.com')->first();
         $adminUser->assignRole('admin');
 
         // Create a user
-        $userUser = User::where('email', 'test@cms.com')->first();
-        $userUser->assignRole('user');
+        $developerUser = User::where('email', 'developer@lask.com')->first();
+        $developerUser->assignRole('developer');
     }
 } 

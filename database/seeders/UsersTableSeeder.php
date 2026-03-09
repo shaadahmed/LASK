@@ -17,22 +17,22 @@ class UsersTableSeeder extends Seeder
         DB::table('users')->insert([
             [
                 'name' => 'Super Admin',
-                'email' => 'superadmin@cms.com',
+                'email' => 'superadmin@lask.com',
                 'password' => Hash::make('S.Admin.123'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Admin',
-                'email' => 'admin@cms.com',
+                'email' => 'admin@lask.com',
                 'password' => Hash::make('Admin.123'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Test User',
-                'email' => 'test@cms.com',
-                'password' => Hash::make('password123'),
+                'name' => 'Developer',
+                'email' => 'developer@lask.com',
+                'password' => Hash::make('Developer.123'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
