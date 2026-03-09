@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\HealthMetricsController;
 use App\Http\Controllers\WebAuthController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/health', [HealthController::class, 'results'])->name('dashboard.health');
+    Route::get('/dashboard/health/metrics', HealthMetricsController::class)
+        ->name('dashboard.health.metrics');
     Route::get('/dashboard/health/connections', [DashboardController::class, 'activeConnections'])
         ->name('dashboard.health.connections');
     Route::post('/logout', [WebAuthController::class, 'destroy'])->name('logout');
