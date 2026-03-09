@@ -12,6 +12,7 @@
         "laravel/tinker": "^2.10.1",
         "rap2hpoutre/laravel-log-viewer": "^2.5",
         "spatie/laravel-activitylog": "*",
+        "spatie/laravel-health": "^1.39",
         "spatie/laravel-permission": "^6.18"
     },
     "require-dev": {
