@@ -4,132 +4,118 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RoleRequest;
-use App\Repositories\Roles\RoleRepositoryInterface;
-use Illuminate\Http\Request;
+use App\Models\User;
+use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    protected $roleRepository;
-
-    public function __construct(RoleRepositoryInterface $roleRepository)
-    {
-        $this->roleRepository = $roleRepository;
-    }
+    public function __construct(
+        private readonly RoleService $roleService,
+    ) {}
 
     public function index(): JsonResponse
     {
-        $roles = $this->roleRepository->all();
-        return response()->json($roles);
+        return response()->json(Role::with('permissions')->get());
     }
 
     public function store(RoleRequest $request): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $validated['guard_name'] = 'api';
+        $role = Role::create($request->validated());
 
-            $role = $this->roleRepository->create($validated);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Role created successfully',
-                'data' => $role
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to create role',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Role created successfully',
+            'data' => $role,
+        ], 201);
     }
 
-    public function show($id): JsonResponse
+    public function show(Role $role): JsonResponse
     {
-        $role = $this->roleRepository->find($id);
-        return response()->json($role);
+        return response()->json($role->load('permissions'));
     }
 
-    public function update(RoleRequest $request, $id): JsonResponse
+    public function update(RoleRequest $request, Role $role): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $validated['guard_name'] = 'api';
+        $role->update($request->validated());
 
-            $role = $this->roleRepository->update($id, $validated);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Role updated successfully',
-                'data' => $role
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update role',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Role updated successfully',
+            'data' => $role,
+        ]);
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(Role $role): JsonResponse
     {
-        $this->roleRepository->delete($id);
-        return response()->json(['message' => 'Role deleted successfully'], 200);
+        $role->delete();
+
+        return response()->json(['message' => 'Role deleted successfully']);
     }
 
-    public function assignPermissions(Request $request, $id): JsonResponse
+    public function assignPermissions(Request $request, Role $role): JsonResponse
     {
         $validated = $request->validate([
-            'permission_ids' => 'required|array',
-            'permission_ids.*' => 'exists:permissions,id'
+            'permission_ids' => ['required', 'array'],
+            'permission_ids.*' => ['exists:permissions,id'],
         ]);
 
-        $this->roleRepository->assignPermissions($id, $validated['permission_ids']);
+        $this->roleService->assignPermissions($role, $validated['permission_ids']);
+
         return response()->json(['message' => 'Permissions assigned successfully']);
     }
 
-    public function removePermissions(Request $request, $id): JsonResponse
+    public function removePermissions(Request $request, Role $role): JsonResponse
     {
         $validated = $request->validate([
-            'permission_ids' => 'required|array',
-            'permission_ids.*' => 'exists:permissions,id'
+            'permission_ids' => ['required', 'array'],
+            'permission_ids.*' => ['exists:permissions,id'],
         ]);
 
-        $this->roleRepository->removePermissions($id, $validated['permission_ids']);
+        $this->roleService->removePermissions($role, $validated['permission_ids']);
+
         return response()->json(['message' => 'Permissions removed successfully']);
     }
 
-    public function getPermissions($id): JsonResponse
+    public function getPermissions(Role $role): JsonResponse
     {
-        $permissions = $this->roleRepository->getPermissions($id);
-        return response()->json($permissions);
+        return response()->json($role->load('permissions')->permissions);
     }
 
     public function assignRoleToUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'role_id' => 'required|exists:roles,id'
+            'user_id' => ['required', 'exists:users,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
-        $this->roleRepository->assignRoleToUser($validated['user_id'], $validated['role_id']);
+        $user = User::findOrFail($validated['user_id']);
+        $role = Role::findOrFail($validated['role_id']);
+
+        $this->roleService->assignRoleToUser($user, $role);
+
         return response()->json(['message' => 'Role assigned to user successfully']);
     }
 
     public function removeRoleFromUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'role_id' => 'required|exists:roles,id'
+            'user_id' => ['required', 'exists:users,id'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
-        $this->roleRepository->removeRoleFromUser($validated['user_id'], $validated['role_id']);
+        $user = User::findOrFail($validated['user_id']);
+        $role = Role::findOrFail($validated['role_id']);
+
+        $this->roleService->removeRoleFromUser($user, $role);
+
         return response()->json(['message' => 'Role removed from user successfully']);
     }
 
-    public function getUserRoles($userId): JsonResponse
+    public function getUserRoles(User $user): JsonResponse
     {
-        $roles = $this->roleRepository->getUserRoles($userId);
-        return response()->json($roles);
+        return response()->json($user->load('roles')->roles);
     }
-} 
+}

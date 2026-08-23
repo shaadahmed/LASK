@@ -4,15 +4,17 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class LogAllRequests
 {
     /**
      * Routes you want to skip logging.
+     *
+     * @var list<string>
      */
-    protected $exceptRoutes = [
+    protected array $exceptRoutes = [
         'login',
         'register',
         'password/reset',
@@ -21,42 +23,24 @@ class LogAllRequests
         'sanctum/csrf-cookie',
     ];
 
-    /**
-     * Handle an incoming request.
-     */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
-        // Check if current request should be skipped
         foreach ($this->exceptRoutes as $route) {
             if ($request->is($route)) {
-                return $next($request); // Skip logging
+                return $next($request);
             }
         }
 
-        // Prepare to capture queries
-        $queries = [];
-        DB::listen(function ($query) use (&$queries) {
-            $queries[] = [
-                'sql' => $query->sql,
-                'bindings' => $query->bindings,
-                'time' => $query->time,
-            ];
-        });
-
-        // Let the request proceed (this triggers DB queries)
         $response = $next($request);
 
         activity('Frontend Request')
-            ->causedBy(Auth::check() ? Auth::user() : null)
+            ->causedBy(Auth::user())
             ->withProperties([
                 'method' => $request->method(),
-                'url' => $request->fullUrl(),
-                'input' => $request->except(['password', 'token']),
+                'path' => $request->path(),
                 'status' => $response->getStatusCode(),
+                'user_id' => Auth::id(),
                 'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'query' => $queries,
-                // 'headers' => $request->headers->all(), // Uncomment if you want full headers (very detailed)
             ])
             ->log('Request made');
 

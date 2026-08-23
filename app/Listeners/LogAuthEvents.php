@@ -1,13 +1,12 @@
 <?php
+
 namespace App\Listeners;
 
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
-use Illuminate\Auth\Events\Failed;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Log;
-use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LogAuthEvents
 {
@@ -35,7 +34,7 @@ class LogAuthEvents
                 ])
                 ->log("User {$eventName}");
         } catch (\Exception $e) {
-            Log::error('Failed to log auth event: ' . $e->getMessage());
+            Log::error('Failed to log auth event: '.$e->getMessage());
         }
     }
 }

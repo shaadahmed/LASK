@@ -5,8 +5,8 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HealthMetricsController;
 use App\Http\Controllers\WebAuthController;
 use App\Models\User;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/telescope-login', function () {
+    abort_unless(app()->environment(['local', 'development']), 404);
+
     $user = User::where('email', 'superadmin@lask.com')->first();
     abort_if(! $user, 404, 'Telescope user not found.');
 
@@ -38,8 +40,9 @@ Route::get('/telescope-login', function () {
 })->middleware('web')->name('telescope.login');
 
 Route::get('logs', function () {
-    if (!app()->environment(['local', 'development'])) {
+    if (! app()->environment(['local', 'development'])) {
         abort(403);
     }
+
     return app()->call('Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
 })->middleware('web')->name('logs');

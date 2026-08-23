@@ -4,110 +4,89 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PermissionRequest;
-use App\Repositories\Permissions\PermissionRepositoryInterface;
-use Illuminate\Http\Request;
+use App\Models\User;
+use App\Services\PermissionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
 {
-    protected $permissionRepository;
-
-    public function __construct(PermissionRepositoryInterface $permissionRepository)
-    {
-        $this->permissionRepository = $permissionRepository;
-    }
+    public function __construct(
+        private readonly PermissionService $permissionService,
+    ) {}
 
     public function index(): JsonResponse
     {
-        $permissions = $this->permissionRepository->all();
-        return response()->json($permissions);
+        return response()->json(Permission::all());
     }
 
     public function store(PermissionRequest $request): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $validated['guard_name'] = 'api';
-            
-            $permission = $this->permissionRepository->create($validated);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Permission created successfully',
-                'data' => $permission
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to create permission',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $permission = Permission::create($request->validated());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Permission created successfully',
+            'data' => $permission,
+        ], 201);
     }
 
-    public function show($id): JsonResponse
+    public function show(Permission $permission): JsonResponse
     {
-        $permission = $this->permissionRepository->find($id);
         return response()->json($permission);
     }
 
-    public function update(PermissionRequest $request, $id): JsonResponse
+    public function update(PermissionRequest $request, Permission $permission): JsonResponse
     {
-        try {
-            $validated = $request->validated();
-            $validated['guard_name'] = 'api';
-            
-            $permission = $this->permissionRepository->update($id, $validated);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Permission updated successfully',
-                'data' => $permission
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update permission',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $permission->update($request->validated());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Permission updated successfully',
+            'data' => $permission,
+        ]);
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(Permission $permission): JsonResponse
     {
-        $this->permissionRepository->delete($id);
-        return response()->json(['message' => 'Permission deleted successfully'], 200);
+        $permission->delete();
+
+        return response()->json(['message' => 'Permission deleted successfully']);
     }
 
     public function assignPermissionToUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'permission_id' => 'required|exists:permissions,id'
+            'user_id' => ['required', 'exists:users,id'],
+            'permission_id' => ['required', 'exists:permissions,id'],
         ]);
 
-        $this->permissionRepository->assignPermissionToUser(
-            $validated['user_id'],
-            $validated['permission_id']
-        );
+        $user = User::findOrFail($validated['user_id']);
+        $permission = Permission::findOrFail($validated['permission_id']);
+
+        $this->permissionService->assignToUser($user, $permission);
+
         return response()->json(['message' => 'Permission assigned to user successfully']);
     }
 
     public function removePermissionFromUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'permission_id' => 'required|exists:permissions,id'
+            'user_id' => ['required', 'exists:users,id'],
+            'permission_id' => ['required', 'exists:permissions,id'],
         ]);
 
-        $this->permissionRepository->removePermissionFromUser(
-            $validated['user_id'],
-            $validated['permission_id']
-        );
+        $user = User::findOrFail($validated['user_id']);
+        $permission = Permission::findOrFail($validated['permission_id']);
+
+        $this->permissionService->removeFromUser($user, $permission);
+
         return response()->json(['message' => 'Permission removed from user successfully']);
     }
 
-    public function getUserPermissions($userId): JsonResponse
+    public function getUserPermissions(User $user): JsonResponse
     {
-        $permissions = $this->permissionRepository->getUserPermissions($userId);
-        return response()->json($permissions);
+        return response()->json($user->load('permissions')->permissions);
     }
-} 
+}

@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
-use App\Models\Permission;
+use Spatie\Permission\Models\Permission;
 
 class Navigation extends Model
 {
-    use SoftDeletes;
     use LogsActivity;
-    
+    use SoftDeletes;
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -31,28 +34,41 @@ class Navigation extends Model
         'permission_id',
         'order',
         'is_active',
-        'is_hidden'
+        'is_hidden',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'is_hidden' => 'boolean',
-        'order' => 'integer'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+            'is_hidden' => 'boolean',
+            'order' => 'integer',
+        ];
+    }
 
-    public function parent()
+    /**
+     * @param  Builder<Navigation>  $query
+     * @return Builder<Navigation>
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query
+            ->where('is_active', true)
+            ->where('is_hidden', false);
+    }
+
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Navigation::class, 'parent_id');
     }
 
-    public function children()
+    public function children(): HasMany
     {
         return $this->hasMany(Navigation::class, 'parent_id');
     }
 
-    public function permission()
+    public function permission(): BelongsTo
     {
         return $this->belongsTo(Permission::class);
     }
-
 }

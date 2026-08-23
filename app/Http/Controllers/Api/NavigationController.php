@@ -4,76 +4,59 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\NavigationRequest;
-use App\Repositories\Navigation\NavigationRepositoryInterface;
-use Illuminate\Http\Request;
+use App\Models\Navigation;
+use App\Services\NavigationService;
 use Illuminate\Http\JsonResponse;
 
 class NavigationController extends Controller
 {
-    protected $navigationRepository;
-
-    public function __construct(NavigationRepositoryInterface $navigationRepository)
-    {
-        $this->navigationRepository = $navigationRepository;
-    }
+    public function __construct(
+        private readonly NavigationService $navigationService,
+    ) {}
 
     public function index(): JsonResponse
     {
-        $navigations = $this->navigationRepository->all();
-        return response()->json($navigations);
+        return response()->json(
+            Navigation::query()->orderBy('order')->get()
+        );
     }
 
     public function store(NavigationRequest $request): JsonResponse
     {
-        try {
-            $navigation = $this->navigationRepository->create($request->validated());
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Navigation created successfully',
-                'data' => $navigation
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to create navigation',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $navigation = Navigation::create($request->validated());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Navigation created successfully',
+            'data' => $navigation,
+        ], 201);
     }
 
-    public function show($id): JsonResponse
+    public function show(Navigation $navigation): JsonResponse
     {
-        $navigation = $this->navigationRepository->find($id);
         return response()->json($navigation);
     }
 
-    public function update(NavigationRequest $request, $id): JsonResponse
+    public function update(NavigationRequest $request, Navigation $navigation): JsonResponse
     {
-        try {
-            $navigation = $this->navigationRepository->update($id, $request->validated());
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Navigation updated successfully',
-                'data' => $navigation
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to update navigation',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $navigation->update($request->validated());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Navigation updated successfully',
+            'data' => $navigation,
+        ]);
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(Navigation $navigation): JsonResponse
     {
-        $this->navigationRepository->delete($id);
-        return response()->json(['message' => 'Navigation deleted successfully'], 200);
+        $navigation->delete();
+
+        return response()->json(['message' => 'Navigation deleted successfully']);
     }
 
     public function active(): JsonResponse
     {
-        $navigations = $this->navigationRepository->getActiveNavigation();
-        return response()->json($navigations);
+        return response()->json($this->navigationService->getActiveNavigations());
     }
-} 
+}

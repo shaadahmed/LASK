@@ -46,8 +46,7 @@ class HealthMetricsService
 
     public function __construct(
         protected SystemStatsService $systemStats,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -202,7 +201,7 @@ class HealthMetricsService
 
     protected function cache(): CacheRepository
     {
-        $store = config('health.result_stores.' . CacheHealthResultStore::class . '.store');
+        $store = config('health.result_stores.'.CacheHealthResultStore::class.'.store');
 
         return $store
             ? Cache::store($store)

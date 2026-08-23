@@ -1,8 +1,12 @@
 <?php
 
+use Spatie\Health\Notifications\CheckFailedNotification;
+use Spatie\Health\Notifications\Notifiable;
+use Spatie\Health\ResultStores\CacheHealthResultStore;
+
 return [
     'result_stores' => [
-        Spatie\Health\ResultStores\CacheHealthResultStore::class => [
+        CacheHealthResultStore::class => [
             'store' => env('HEALTH_CACHE_STORE', 'file'),
         ],
     ],
@@ -11,10 +15,10 @@ return [
         'enabled' => false,
 
         'notifications' => [
-            Spatie\Health\Notifications\CheckFailedNotification::class => ['mail'],
+            CheckFailedNotification::class => ['mail'],
         ],
 
-        'notifiable' => Spatie\Health\Notifications\Notifiable::class,
+        'notifiable' => Notifiable::class,
 
         'throttle_notifications_for_minutes' => 60,
         'throttle_notifications_key' => 'health:latestNotificationSentAt:',

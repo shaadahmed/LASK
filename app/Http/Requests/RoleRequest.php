@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class RoleRequest extends FormRequest
@@ -20,7 +20,9 @@ class RoleRequest extends FormRequest
         if ($this->isMethod('POST')) {
             $rules['name'] = 'required|string|max:255|unique:roles,name';
         } elseif ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $rules['name'] = 'sometimes|required|string|max:255|unique:roles,name,' . $this->route('role');
+            $role = $this->route('role');
+            $roleId = is_object($role) ? $role->getKey() : $role;
+            $rules['name'] = 'sometimes|required|string|max:255|unique:roles,name,'.$roleId;
         }
 
         return $rules;
@@ -31,7 +33,7 @@ class RoleRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'status' => 'error',
             'message' => 'Validation failed',
-            'errors' => $validator->errors()
+            'errors' => $validator->errors(),
         ], 422));
     }
-} 
+}

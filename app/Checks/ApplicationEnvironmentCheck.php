@@ -8,9 +8,7 @@ use Spatie\Health\Checks\Result;
 
 class ApplicationEnvironmentCheck extends Check
 {
-    public function __construct(protected SystemStatsService $stats)
-    {
-    }
+    public function __construct(protected SystemStatsService $stats) {}
 
     public function run(): Result
     {

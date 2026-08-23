@@ -153,7 +153,7 @@ class SystemStatsService
     public function cacheCard(): array
     {
         try {
-            $key = 'lask-health-check-' . md5((string) microtime(true));
+            $key = 'lask-health-check-'.md5((string) microtime(true));
 
             Cache::put($key, 'ok', now()->addMinutes(1));
             $cached = Cache::get($key) === 'ok';
@@ -230,7 +230,7 @@ class SystemStatsService
         return $this->card(
             'Laravel Optimization',
             'Not cached',
-            'Missing: ' . implode(', ', $missing),
+            'Missing: '.implode(', ', $missing),
             'failed',
         );
     }
@@ -265,7 +265,7 @@ class SystemStatsService
 
     protected function databaseHost(): string
     {
-        return (string) config('database.connections.' . config('database.default') . '.host', 'localhost');
+        return (string) config('database.connections.'.config('database.default').'.host', 'localhost');
     }
 
     protected function formatBytes(int $bytes): string
@@ -278,12 +278,12 @@ class SystemStatsService
         $power = (int) floor(log($bytes, 1024));
         $power = min($power, count($units) - 1);
 
-        return number_format($bytes / (1024 ** $power), $power > 0 ? 2 : 0) . ' ' . $units[$power];
+        return number_format($bytes / (1024 ** $power), $power > 0 ? 2 : 0).' '.$units[$power];
     }
 
     protected function pluralize(int $count, string $word): string
     {
-        return $count . ' ' . ($count === 1 ? $word : $word . 's');
+        return $count.' '.($count === 1 ? $word : $word.'s');
     }
 
     protected function trimMessage(string $message): string
